@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gradely</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="sys-header">
+    <div class="sys-header-inner">
+      <div>
+        <h1 class="sys-title">Gradely</h1>
+        <div class="sys-sub">SGPA / CGPA</div>
+      </div>
+      <div class="sys-actions">
+        <button id="btn-add-semester" class="btn btn-secondary" type="button">+ SEMESTER</button>
+        <button id="btn-export" class="btn btn-secondary" type="button">EXPORT</button>
+        <button id="btn-import" class="btn btn-secondary" type="button">IMPORT</button>
+        <input id="file-import" type="file" accept="application/json" hidden />
+        <button id="btn-reset" class="btn btn-danger-ghost" type="button">RESET</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="info-strip" aria-label="Summary">
+      <div class="info-cell">
+        <div class="info-label">SEMESTERS</div>
+        <div id="info-semester" class="info-value">0</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-label">TOTAL CREDITS</div>
+        <div id="info-credits" class="info-value">0</div>
+      </div>
+      <div class="info-cell">
+        <div class="info-label">CURRENT CGPA</div>
+        <div id="info-cgpa" class="info-value info-cgpa">—</div>
+      </div>
+    </section>
+
+    <section id="welcome-view">
+      <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">SEMESTERS</span></div>
+      <div class="panel empty-panel">
+        <div class="empty-title mono">NO SEMESTERS YET</div>
+        <div class="empty-actions">
+          <button id="btn-scratch" class="btn btn-primary" type="button">+ SEMESTER</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="semesters-view" hidden>
+      <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">SEMESTERS</span>
+        <span class="sec-right"><button id="btn-add-semester-2" class="btn btn-secondary btn-xs" type="button">+ SEMESTER</button></span>
+      </div>
+      <div id="semesters"></div>
+
+      <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">HISTORY</span></div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table class="data-table compact">
+            <thead><tr><th>SEMESTER</th><th>CREDITS</th><th>SGPA</th></tr></thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+        <div class="history-foot mono">
+          <span class="rl">CURRENT CGPA</span>
+          <span id="history-cgpa" class="history-cgpa">—</span>
+        </div>
+      </div>
+
+    </section>
+
+    <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">GRADING SCALE</span></div>
+    <section class="panel">
+      <div class="table-wrap">
+        <table class="data-table compact">
+          <thead><tr><th>MARKS</th><th>GRADE</th><th>POINTS</th></tr></thead>
+          <tbody id="grade-body"></tbody>
+        </table>
+      </div>
+      <p class="faint mono formula">SGPA = Σ(Credits × Points) / ΣCredits</p>
+    </section>
+  </main>
+
+  <footer class="sys-footer mono"><span>Gradely</span></footer>
+
+  <div id="modal-backdrop" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div id="modal-title" class="modal-title">RESET ALL DATA?</div>
+      <p class="modal-body">This clears all semesters and stored data.</p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-secondary" type="button">CANCEL</button>
+        <button id="modal-confirm" class="btn btn-danger" type="button">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
