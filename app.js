@@ -201,15 +201,15 @@ function renderSemester(sem, index) {
     const c = validCredits(s.credits);
     const weighted = g !== null && c !== null ? c * g.points : null;
     return `
-      <tr data-sub-id="${s.id}">
-        <td data-label="SUBJECT"><input class="name-input" type="text" placeholder="Subject" value="${esc(s.name)}" aria-label="Subject name" /></td>
-        <td data-label="CREDITS"><input class="credits-input" type="number" min="0.5" step="0.5" placeholder="Credits" value="${esc(s.credits)}" aria-label="Credits" /></td>
-        <td data-label="MARKS"><input class="marks-input" type="number" min="0" max="100" step="0.5" placeholder="Marks" value="${esc(s.marks)}" aria-label="Marks out of 100" /></td>
-        <td data-label="GRADE" class="js-grade">${gradeHtml(g)}</td>
-        <td data-label="POINTS" class="num js-points">${g ? g.points : "—"}</td>
-        <td data-label="WEIGHTED" class="num js-weighted">${weighted !== null ? weighted : "—"}</td>
-        <td class="cell-action"><button class="btn btn-row-del btn-del-sub" type="button" title="Delete subject" aria-label="Delete subject">×</button></td>
-      </tr>`;
+      <div class="sub-card" data-sub-id="${s.id}">
+        <div class="sub-field sub-name"><span class="sub-label">SUBJECT</span><input class="name-input" type="text" placeholder="Subject" value="${esc(s.name)}" aria-label="Subject name" /></div>
+        <div class="sub-field"><span class="sub-label">CREDITS</span><input class="credits-input" type="number" min="0.5" step="0.5" placeholder="Credits" value="${esc(s.credits)}" aria-label="Credits" /></div>
+        <div class="sub-field"><span class="sub-label">MARKS</span><input class="marks-input" type="number" min="0" max="100" step="0.5" placeholder="Marks" value="${esc(s.marks)}" aria-label="Marks out of 100" /></div>
+        <div class="sub-field"><span class="sub-label">GRADE</span><span class="js-grade">${gradeHtml(g)}</span></div>
+        <div class="sub-field"><span class="sub-label">POINTS</span><span class="num js-points">${g ? g.points : "—"}</span></div>
+        <div class="sub-field sub-weighted"><span class="sub-label">WEIGHTED POINTS</span><span class="num js-weighted">${weighted !== null ? weighted : "—"}</span></div>
+        <div class="sub-field sub-action"><button class="btn btn-row-del btn-del-sub" type="button" aria-label="Delete subject"><span class="del-x" aria-hidden="true">×</span><span class="del-word">DELETE SUBJECT</span></button></div>
+      </div>`;
   }).join("");
 
   const sgpa = sgpaHtml(st);
@@ -217,13 +217,9 @@ function renderSemester(sem, index) {
 
   const bodyHtml = sem.subjects.length === 0
     ? `<div class="empty-subjects"><span class="rl">NO SUBJECTS</span><button class="btn btn-secondary btn-xs btn-add-sub" type="button">+ ADD SUBJECT</button></div>`
-    : `<div class="table-wrap">
-      <table class="data-table subject-table">
-        <thead>
-          <tr><th>SUBJECT</th><th>CREDITS</th><th>MARKS</th><th>GRADE</th><th>POINTS</th><th>WEIGHTED</th><th></th></tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
+    : `<div class="subjects">
+      <div class="sub-head" aria-hidden="true"><span>SUBJECT</span><span>CREDITS</span><span>MARKS</span><span>GRADE</span><span>POINTS</span><span>WEIGHTED</span><span></span></div>
+      ${rows}
     </div>`;
 
   card.innerHTML = `
@@ -249,8 +245,8 @@ function renderSemester(sem, index) {
 
 function renderHistory() {  historyBody.innerHTML = semesters.map((sem, i) => {
     const st = semesterStats(sem);
-    return `<tr><td>${i + 1} - ${esc(sem.name || "")}</td><td class="num">${st.totalCredits}</td><td class="num">${st.sgpa !== null ? fmt(st.sgpa) : "-"}</td></tr>`;
-  }).join("") || `<tr><td colspan="3" class="faint">NO SEMESTERS RECORDED.</td></tr>`;
+    return `<div class="hist-card"><div class="hist-main"><span class="mono faint hist-pos">SEMESTER ${i + 1}</span><span class="hist-name">${esc(sem.name || "")}</span></div><div class="hist-stats"><div class="hist-stat"><span class="rl">CREDITS</span><span class="num">${st.totalCredits}</span></div><div class="hist-stat"><span class="rl">SGPA</span><span class="num">${st.sgpa !== null ? fmt(st.sgpa) : "—"}</span></div></div></div>`;
+  }).join("") || `<div class="faint hist-empty">NO SEMESTERS RECORDED.</div>`;
   const overall = overallStats();
   historyCgpa.textContent = overall.cgpa !== null ? `${fmt(overall.cgpa)}` : "—";
 }
@@ -406,7 +402,7 @@ document.getElementById("file-import").addEventListener("change", (e) => {
 });
 
 semestersEl.addEventListener("input", (e) => {
-  const row = e.target.closest("tr[data-sub-id]");
+  const row = e.target.closest("[data-sub-id]");
   const card = e.target.closest("[data-sem-id]");
   if (!card) return;
   const sem = findSemester(card);
@@ -434,7 +430,7 @@ semestersEl.addEventListener("click", (e) => {
   if (e.target.classList.contains("btn-add-sub")) {
     addSubject(sem);
   } else if (e.target.classList.contains("btn-del-sub")) {
-    const row = e.target.closest("tr[data-sub-id]");
+    const row = e.target.closest("[data-sub-id]");
     if (!row) return;
     deleteSubject(sem, row.dataset.subId);
   } else if (e.target.classList.contains("btn-del-sem")) {
