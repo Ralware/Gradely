@@ -149,6 +149,16 @@ function esc(s) {
   }[ch]));
 }
 
+function gradeHtml(g) {
+  return g ? `<span class="grade grade-${g.grade}">${g.grade}</span>` : `<span class="grade-empty">—</span>`;
+}
+
+function sgpaHtml(st) {
+  return st.sgpa !== null
+    ? `<span class="dl">SGPA</span><strong class="dv">${fmt(st.sgpa)}</strong>`
+    : `<span class="dl">SGPA</span><strong class="dv dim">—</strong>`;
+}
+
 const welcomeView = document.getElementById("welcome-view");
 const semestersView = document.getElementById("semesters-view");
 const semestersEl = document.getElementById("semesters");
@@ -195,16 +205,14 @@ function renderSemester(sem, index) {
         <td data-label="SUBJECT"><input class="name-input" type="text" placeholder="Subject" value="${esc(s.name)}" aria-label="Subject name" /></td>
         <td data-label="CREDITS"><input class="credits-input" type="number" min="0.5" step="0.5" placeholder="Credits" value="${esc(s.credits)}" aria-label="Credits" /></td>
         <td data-label="MARKS"><input class="marks-input" type="number" min="0" max="100" step="0.5" placeholder="Marks" value="${esc(s.marks)}" aria-label="Marks out of 100" /></td>
-        <td data-label="GRADE">${g ? `<span class="grade grade-${g.grade}">${g.grade}</span>` : `<span class="grade-empty">—</span>`}</td>
-        <td data-label="POINTS" class="num">${g ? g.points : "—"}</td>
-        <td data-label="WEIGHTED" class="num">${weighted !== null ? weighted : "—"}</td>
+        <td data-label="GRADE" class="js-grade">${gradeHtml(g)}</td>
+        <td data-label="POINTS" class="num js-points">${g ? g.points : "—"}</td>
+        <td data-label="WEIGHTED" class="num js-weighted">${weighted !== null ? weighted : "—"}</td>
         <td class="cell-action"><button class="btn btn-row-del btn-del-sub" type="button" title="Delete subject" aria-label="Delete subject">×</button></td>
       </tr>`;
   }).join("");
 
-  const sgpaHtml = st.sgpa !== null
-    ? `<span class="dl">SGPA</span><strong class="dv">${fmt(st.sgpa)}</strong>`
-    : `<span class="dl">SGPA</span><strong class="dv dim">—</strong>`;
+  const sgpa = sgpaHtml(st);
   const label = `SEMESTER ${index + 1}`;
 
   const bodyHtml = sem.subjects.length === 0
@@ -224,12 +232,12 @@ function renderSemester(sem, index) {
         <span class="mono faint sem-pos">${label}</span>
         <input class="sem-name" type="text" value="${esc(sem.name)}" aria-label="Semester name" />
       </div>
-      <span class="sem-sgpa">${sgpaHtml}</span>
+      <span class="sem-sgpa">${sgpa}</span>
     </div>
     ${bodyHtml}
     <div class="sem-foot">
-      <span class="sem-meta">TOTAL CREDITS <strong>${st.totalCredits}</strong></span>
-      <span class="sem-meta">WEIGHTED POINTS <strong>${st.weighted}</strong></span>
+      <span class="sem-meta">TOTAL CREDITS <strong class="js-total">${st.totalCredits}</strong></span>
+      <span class="sem-meta">WEIGHTED POINTS <strong class="js-weighted">${st.weighted}</strong></span>
       <span class="sem-actions">
         <button class="btn btn-secondary btn-xs btn-add-sub" type="button">+ ADD SUBJECT</button>
         <button class="btn btn-danger-ghost btn-xs btn-del-sem" type="button">DELETE</button>
@@ -239,8 +247,7 @@ function renderSemester(sem, index) {
   return card;
 }
 
-function renderHistory() {
-  historyBody.innerHTML = semesters.map((sem, i) => {
+function renderHistory() {  historyBody.innerHTML = semesters.map((sem, i) => {
     const st = semesterStats(sem);
     return `<tr><td>${i + 1} - ${esc(sem.name || "")}</td><td class="num">${st.totalCredits}</td><td class="num">${st.sgpa !== null ? fmt(st.sgpa) : "-"}</td></tr>`;
   }).join("") || `<tr><td colspan="3" class="faint">NO SEMESTERS RECORDED.</td></tr>`;
@@ -258,6 +265,29 @@ function renderGradeTable() {
     else range = `${row.min}–${nextMin - 1}`;
     return `<tr><td>${range}</td><td><span class="grade grade-${row.grade}">${row.grade}</span></td><td>${row.points}</td></tr>`;
   }).join("");
+}
+
+function refreshDerived() {
+  for (const sem of semesters) {
+    const card = semestersEl.querySelector(`[data-sem-id="${sem.id}"]`);
+    if (!card) continue;
+    const st = semesterStats(sem);
+    for (const s of sem.subjects) {
+      const row = card.querySelector(`[data-sub-id="${s.id}"]`);
+      if (!row) continue;
+      const g = marksToGrade(s.marks);
+      const c = validCredits(s.credits);
+      const weighted = g !== null && c !== null ? c * g.points : null;
+      row.querySelector(".js-grade").innerHTML = gradeHtml(g);
+      row.querySelector(".js-points").textContent = g ? g.points : "—";
+      row.querySelector(".js-weighted").textContent = weighted !== null ? weighted : "—";
+    }
+    card.querySelector(".sem-sgpa").innerHTML = sgpaHtml(st);
+    card.querySelector(".sem-foot .js-total").textContent = st.totalCredits;
+    card.querySelector(".sem-foot .js-weighted").textContent = st.weighted;
+  }
+  renderInfoBar();
+  renderHistory();
 }
 
 function toast(msg) {
@@ -392,26 +422,7 @@ semestersEl.addEventListener("input", (e) => {
     if (e.target.classList.contains("marks-input")) sub.marks = e.target.value;
   }
   save();
-  const active = document.activeElement;
-  const activeClass = active ? active.className : null;
-  const activeRow = active && active.closest ? active.closest("tr[data-sub-id]") : null;
-  const activeRowId = activeRow ? activeRow.dataset.subId : null;
-  const selStart = active && active.selectionStart !== undefined ? active.selectionStart : null;
-  render();
-  if (activeClass && (activeClass.includes("marks-input") || activeClass.includes("credits-input") || activeClass.includes("name-input") || activeClass.includes("sem-name"))) {
-    const cardEl = semestersEl.querySelector(`[data-sem-id="${sem.id}"]`);
-    if (cardEl) {
-      const input = activeRowId
-        ? cardEl.querySelector(`[data-sub-id="${activeRowId}"] .${activeClass.split(" ")[0]}`)
-        : cardEl.querySelector(".sem-name");
-      if (input) {
-        input.focus();
-        if (selStart !== null && input.setSelectionRange) {
-          try { input.setSelectionRange(selStart, selStart); } catch (_) {}
-        }
-      }
-    }
-  }
+  refreshDerived();
 });
 
 semestersEl.addEventListener("click", (e) => {
